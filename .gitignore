@@ -1,0 +1,30 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+nul
+AISmartCamera_Frontend.zip
+
+# IDE 配置文件
+.idea/
+.vscode/
+.trae/
+
+# 临时文件
+*.log
+*.tmp
+*.temp
+app/img.png
+app/img_1.png
+app/plan.md
