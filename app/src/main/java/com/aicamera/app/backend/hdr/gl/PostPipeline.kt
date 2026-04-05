@@ -281,111 +281,151 @@ class PostPipeline(private val context: Context) {
         return outputTexture
     }
     
+    /**
+     * 降噪处理 - 使用ISO自适应参数
+     * 根据ISO和噪声模型动态调整降噪强度
+     */
     private fun processDenoise(inputTexture: Int, params: ProcessingParameters): Int {
         Log.d(TAG, "Processing denoise")
-        
+
         val noiseModeler = params.noiseModeler
         if (noiseModeler == null) {
             Log.d(TAG, "No noise modeler, skipping denoise")
             return inputTexture
         }
-        
-        val noiseS = noiseModeler.getNoiseS()
-        val noiseO = noiseModeler.getNoiseO()
-        
-        if (noiseS < 0.0001f && noiseO < 0.0001f) {
-            Log.d(TAG, "Noise levels too low, skipping denoise")
+
+        // 检查是否应该跳过降噪（正常光线且噪点很低）
+        if (!noiseModeler.shouldApplyDenoise()) {
+            Log.d(TAG, "Noise levels too low for current ISO (${params.iso}), skipping denoise")
             return inputTexture
         }
-        
+
+        val noiseS = noiseModeler.getNoiseS()
+        val noiseO = noiseModeler.getNoiseO()
+
+        // 获取ISO自适应参数
+        val kernelSize = noiseModeler.getAdaptiveKernelSize()
+        val denoiseStrength = noiseModeler.getDenoiseStrength()
+
+        Log.d(TAG, "Denoise params: ISO=${params.iso}, kernel=$kernelSize, strength=$denoiseStrength")
+
         val shader = loadShaderFromAsset("shaders/denoise/esd3d.glsl")
         val program = createProgram(VERTEX_SHADER, shader)
-        
+
         val outputTexture = createOutputTexture(width, height)
         val framebuffer = createFramebuffer(outputTexture)
-        
+
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer)
         GLES20.glViewport(0, 0, width, height)
-        
+
         GLES20.glUseProgram(program)
-        
+
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTexture)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "InputBuffer"), 0)
-        
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "noiseS"), noiseS)
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "noiseO"), noiseO)
+
+        // 根据降噪强度调整噪声参数
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "noiseS"), noiseS * denoiseStrength)
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "noiseO"), noiseO * denoiseStrength)
         GLES20.glUniform2i(GLES20.glGetUniformLocation(program, "size"), width, height)
-        
-        val kernelSize = calculateKernelSize(noiseS + noiseO)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "MSIZE"), kernelSize)
-        
+
         drawQuad(program)
-        
+
         GLES20.glDeleteProgram(program)
         GLES20.glDeleteFramebuffers(1, intArrayOf(framebuffer), 0)
         GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
-        
+
         return outputTexture
     }
     
+    /**
+     * 锐化处理 - 使用ISO自适应锐化强度
+     * 高ISO时自动降低锐化以避免噪点放大
+     */
     private fun processSharpen(inputTexture: Int, params: ProcessingParameters): Int {
         Log.d(TAG, "Processing sharpen")
-        
+
+        val noiseModeler = params.noiseModeler
+
+        // 计算自适应锐化强度
+        // 基础强度 0.5，根据ISO自动调整
+        val baseStrength = 0.5f
+        val adaptiveStrength = noiseModeler?.getAdaptiveSharpenStrength(baseStrength) ?: baseStrength
+
+        // 估计噪声水平用于着色器内的局部调整
+        val noiseLevel = noiseModeler?.getCombinedNoise() ?: 0.01f
+
+        Log.d(TAG, "Sharpen params: ISO=${params.iso}, strength=$adaptiveStrength, noise=$noiseLevel")
+
         val shader = loadShaderFromAsset("shaders/sharpening/sharpen.glsl")
         val program = createProgram(VERTEX_SHADER, shader)
-        
+
         val outputTexture = createOutputTexture(width, height)
         val framebuffer = createFramebuffer(outputTexture)
-        
+
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer)
         GLES20.glViewport(0, 0, width, height)
-        
+
         GLES20.glUseProgram(program)
-        
+
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTexture)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "InputBuffer"), 0)
-        
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "strength"), 0.5f)
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "size"), 1.1f)
+
+        // 设置自适应锐化参数
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "strength"), adaptiveStrength)
         GLES20.glUniform2i(GLES20.glGetUniformLocation(program, "size"), width, height)
-        
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "noiseLevel"), noiseLevel)
+
         drawQuad(program)
-        
+
         GLES20.glDeleteProgram(program)
         GLES20.glDeleteFramebuffers(1, intArrayOf(framebuffer), 0)
         GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
-        
+
         return outputTexture
     }
     
+    /**
+     * 色调映射处理 - 应用带暗部保护的色调映射
+     * 减少暗部噪点放大，保持高光细节
+     */
     private fun processToneMapping(inputTexture: Int, params: ProcessingParameters): Int {
         Log.d(TAG, "Processing tone mapping")
-        
+
         val shader = loadShaderFromAsset("shaders/tonemap/tonemap.glsl")
         val program = createProgram(VERTEX_SHADER, shader)
-        
+
         val outputTexture = createOutputTexture(width, height)
         val framebuffer = createFramebuffer(outputTexture)
-        
+
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebuffer)
         GLES20.glViewport(0, 0, width, height)
-        
+
         GLES20.glUseProgram(program)
-        
+
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTexture)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "InputBuffer"), 0)
-        
+
+        // 设置色调映射强度参数
         GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "strength"), params.tonemapStrength)
-        
+        // 使用自适应Gamma - 高ISO时稍微提高Gamma以减少暗部噪点
+        val adaptiveGamma = when {
+            params.iso < 200 -> 2.2f
+            params.iso < 400 -> 2.3f
+            params.iso < 800 -> 2.4f
+            else -> 2.5f
+        }
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "gamma"), adaptiveGamma)
+
         drawQuad(program)
-        
+
         GLES20.glDeleteProgram(program)
         GLES20.glDeleteFramebuffers(1, intArrayOf(framebuffer), 0)
         GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
-        
+
         return outputTexture
     }
     
@@ -516,13 +556,6 @@ class PostPipeline(private val context: Context) {
             path.contains("tonemap") -> TONEMAP_FALLBACK
             else -> PASS_THROUGH_FRAGMENT
         }
-    }
-    
-    private fun calculateKernelSize(noise: Float): Int {
-        val base = 7
-        val max = 21
-        val scaled = base + (noise * 100).toInt()
-        return minOf(max, scaled + (scaled % 2))
     }
     
     private fun cleanup() {

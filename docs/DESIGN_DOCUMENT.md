@@ -171,25 +171,27 @@ val maxContrast = 0.12f    // 对比度最多 ±12%
 
 | 模块 | 职责 | 关键方法 |
 |------|------|---------|
-| CameraManager | 相机控制、参数获取 | `bindCamera()`, `takePhoto()` |
-| AIAnalyzer | AI 推理、结果处理 | `analyzeScene()`, `analyzeComposition()` |
-| ImageProcessor | 图片处理、滤镜应用 | `cropImage()`, `applyFilter()` |
-| DataManager | 数据存储、缓存管理 | `savePhoto()`, `loadCache()` |
+| CameraBackend | 相机控制、参数获取 | `capturePhoto()`, `switchCamera()`, `setFlashMode()` |
+| AiBackend | AI 推理、结果处理 | `detectScene()`, `analyzeComposition()` |
+| ColorBackend | 调色处理、ONNX 推理 | `analyzeColorEnhancement()`, `applyColorAdjustments()` |
+| CropBackend | 智能裁剪、主体检测 | `analyzeSmartCrop()`, `cropImage()` |
+| StorageBackend | 数据存储、缓存管理 | `savePhoto()`, `loadCache()` |
+| HdrService | HDR 拍照、多帧融合 | `captureHdr()`, `getProgress()` |
 
 #### 3.2.3 AI 层设计
 
 **设计原则**：
 - 所有 AI 推理在设备端完成
-- 使用 TensorFlow Lite 或 ONNX Runtime 进行推理
+- 使用 ONNX Runtime 进行模型推理
 - 智能帧率控制，避免性能开销
 
 **模块职责**：
 
 | 模块 | 职责 | 模型 |
 |------|------|------|
-| SceneAnalyzer | 场景识别 | ML Kit Image Labeling |
-| CompositionAnalyzer | 构图分析 | ML Kit + 自研算法 |
-| ImageOptimizer | 色彩增强 | MobileNetV2 (TFLite) |
+| AiBackend | 场景识别、构图分析 | ML Kit Image Labeling + Face Detection |
+| ColorBackend | 色彩增强 | ONNX Runtime + 自训练模型 |
+| CropBackend | 智能裁剪 | ML Kit Object Detection |
 
 ### 3.3 数据流设计
 
@@ -398,16 +400,17 @@ fun applyAIEnhancement(imageUri: String) {
 | **Kotlin** | 2.0.21 | 开发语言 | 现代、简洁、空安全 |
 | **Jetpack Compose** | 1.5.4 | UI 框架 | 声明式、实时预览性能好 |
 | **Material 3** | - | 设计系统 | 现代化、支持深色主题 |
-| **CameraX** | 1.1.0-beta01 | 相机 API | 简化相机开发、自动生命周期管理 |
+| **CameraX** | 1.4.1 | 相机 API | 简化相机开发、自动生命周期管理 |
 | **Coil** | 2.4.0 | 图片加载 | Kotlin 优先、轻量级 |
 
 ### 5.2 AI 技术栈
 
 | 技术 | 版本 | 用途 | 选择理由 |
 |------|------|------|---------|
-| **ML Kit** | 17.0.7 | 场景识别 | Google 官方、离线可用、性能优化 |
-| **TensorFlow Lite** | Latest | 模型推理 | 移动端优化、量化支持 |
-| **MobileNetV2** | v1.0 | 色彩增强 | 轻量级、准确率高 |
+| **ML Kit Image Labeling** | 17.0.9 | 场景识别 | Google 官方、离线可用、性能优化 |
+| **ML Kit Face Detection** | 16.1.7 | 人脸检测 | 高精度、实时性好 |
+| **ML Kit Object Detection** | 17.0.2 | 对象检测 | 智能裁剪支持 |
+| **ONNX Runtime** | 1.19.0 | 模型推理 | 跨平台、高性能、支持量化 |
 
 ### 5.3 架构模式
 
@@ -732,9 +735,9 @@ fun AISmartCameraTheme(
 
 ---
 
-**文档版本**：v1.0
-**最后更新**：2026-03-22
-**状态**：初稿完成
+**文档版本**：v1.1
+**最后更新**：2026-04-05
+**状态**：已更新，反映项目实际实现
 
 ---
 

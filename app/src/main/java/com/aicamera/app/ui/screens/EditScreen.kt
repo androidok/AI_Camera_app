@@ -113,7 +113,7 @@ fun EditScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(viewfinderHeight)
-                        .background(Color.Black), // 取景框背景为黑色
+                        .background(colorScheme.background),
                     contentAlignment = Alignment.Center
                 ) {
                 Image(

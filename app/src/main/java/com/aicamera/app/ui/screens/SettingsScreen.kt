@@ -317,8 +317,8 @@ fun SettingsScreen(
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = colorScheme.primary,
                                 checkedTrackColor = colorScheme.primary,
-                                uncheckedThumbColor = colorScheme.primary,
-                                uncheckedTrackColor = colorScheme.primary.copy(alpha = 0.3f)
+                                uncheckedThumbColor = Color(0xFF9E9E9E),
+                                uncheckedTrackColor = Color(0xFF616161)
                             )
                         )
                     }

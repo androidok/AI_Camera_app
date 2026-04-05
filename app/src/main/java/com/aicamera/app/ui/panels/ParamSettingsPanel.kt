@@ -53,6 +53,7 @@ fun ParamSettingsPanel(
     var iso by remember { mutableStateOf(CameraBackend.ManualSettings.iso ?: 100) }
     var exposureTimeNs by remember { mutableStateOf(CameraBackend.ManualSettings.exposureTimeNs) }
     var hdrEnabled by remember { mutableStateOf(CameraBackend.ManualSettings.hdrEnabled) }
+    var currentRatio by remember { mutableStateOf(CameraBackend.ManualSettings.previewAspectRatioPortrait) }
     val camera = CameraSession.camera()
 
     val minExposureSeconds = 1.0 / 4000.0
@@ -108,6 +109,9 @@ fun ParamSettingsPanel(
             }
             if (CameraBackend.ManualSettings.hdrEnabled != hdrEnabled) {
                 hdrEnabled = CameraBackend.ManualSettings.hdrEnabled
+            }
+            if (CameraBackend.ManualSettings.previewAspectRatioPortrait != currentRatio) {
+                currentRatio = CameraBackend.ManualSettings.previewAspectRatioPortrait
             }
             delay(100)
         }
@@ -289,7 +293,6 @@ fun ParamSettingsPanel(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 val aspectList = listOf(-1f to "全屏", 0.5625f to "16:9", 0.75f to "4:3", 1.0f to "1:1")
-                                val currentRatio = CameraBackend.ManualSettings.previewAspectRatioPortrait
 
                                 for ((ratio, label) in aspectList) {
                                     val isSelected = kotlin.math.abs(currentRatio - ratio) < 0.01f
@@ -319,6 +322,7 @@ fun ParamSettingsPanel(
                                                 }
                                             )
                                             .clickable {
+                                                currentRatio = ratio
                                                 CameraBackend.ManualSettings.previewAspectRatioPortrait = ratio
                                             }
                                             .padding(vertical = 10.dp),

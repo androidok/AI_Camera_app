@@ -12,7 +12,7 @@
 
 | 许可证类型        | 数量 | 兼容性    | 说明           |
 | ------------ | -- | ------ | ------------ |
-| Apache 2.0   | 15 | ✅ 完全兼容 | 允许商业使用、修改和分发 |
+| Apache 2.0   | 18 | ✅ 完全兼容 | 允许商业使用、修改和分发 |
 | MIT          | 2  | ✅ 完全兼容 | 最宽松的开源许可证    |
 | BSD 2-Clause | 1  | ✅ 完全兼容 | 允许商业使用       |
 | EPL 1.0      | 1  | ✅ 兼容   | 需要公开修改内容     |
@@ -69,7 +69,7 @@
 
 #### 5. CameraX
 
-- **版本**：1.1.0-beta01
+- **版本**：1.4.1
 - **许可证**：Apache License 2.0
 - **用途**：相机 API 封装
 - **使用方式**：相机预览、拍照、参数控制
@@ -78,7 +78,7 @@
   - `camera-camera2` - Camera2 API 封装
   - `camera-lifecycle` - 生命周期集成
   - `camera-view` - 预览视图
-  - `camera-extensions` - 扩展功能
+  - `camera-extensions` - 扩展功能（HDR、夜景模式等）
 - **项目地址**：<https://developer.android.com/training/camerax>
 - **合规性**：✅ 已保留许可证声明
 
@@ -124,18 +124,36 @@
 
 #### 10. ML Kit Image Labeling
 
-- **版本**：17.0.7
+- **版本**：17.0.9
 - **许可证**：Apache License 2.0
 - **用途**：场景识别、构图辅助
 - **使用方式**：实时分析相机预览帧，识别场景类型（人像、风景、美食、夜景等）
 - **项目地址**：<https://developers.google.com/ml-kit>
 - **合规性**：✅ 已保留许可证声明
 
+#### 11. ML Kit Face Detection
+
+- **版本**：16.1.7
+- **许可证**：Apache License 2.0
+- **用途**：人脸检测、构图分析
+- **使用方式**：检测人脸位置，提供构图建议
+- **项目地址**：<https://developers.google.com/ml-kit/vision/face-detection>
+- **合规性**：✅ 已保留许可证声明
+
+#### 12. ML Kit Object Detection
+
+- **版本**：17.0.2
+- **许可证**：Apache License 2.0
+- **用途**：对象检测、智能裁剪
+- **使用方式**：检测图片中的主体对象，提供裁剪建议
+- **项目地址**：<https://developers.google.com/ml-kit/vision/object-detection>
+- **合规性**：✅ 已保留许可证声明
+
 ***
 
 ### 2.3 第三方开源库
 
-#### 11. Coil (Coil-kt)
+#### 13. Coil (Coil-kt)
 
 - **版本**：2.4.0
 - **许可证**：Apache License 2.0
@@ -145,7 +163,7 @@
 - **作者**：coil-kt
 - **合规性**：✅ 已保留许可证声明
 
-#### 12. Material Icons Extended
+#### 14. Material Icons Extended
 
 - **版本**：1.5.4
 - **许可证**：Apache License 2.0
@@ -154,11 +172,48 @@
 - **项目地址**：<https://developer.android.com/jetpack/androidx/releases/compose-material>
 - **合规性**：✅ 已保留许可证声明
 
+#### 15. ONNX Runtime for Android
+
+- **版本**：1.19.0
+- **许可证**：MIT License
+- **用途**：AI 模型推理
+- **使用方式**：色彩增强模型推理
+- **项目地址**：<https://github.com/microsoft/onnxruntime>
+- **作者**：Microsoft
+- **合规性**：✅ 已保留许可证声明
+
+#### 16. Kotlinx Coroutines Play Services
+
+- **版本**：1.7.3
+- **许可证**：Apache License 2.0
+- **用途**：协程与 Google Play Services 集成
+- **使用方式**：ML Kit 异步任务处理
+- **项目地址**：<https://github.com/Kotlin/kotlinx.coroutines>
+- **合规性**：✅ 已保留许可证声明
+
+#### 17. AndroidX Security Crypto
+
+- **版本**：1.1.0-alpha06
+- **许可证**：Apache License 2.0
+- **用途**：加密存储
+- **使用方式**：安全偏好设置存储
+- **项目地址**：<https://developer.android.com/reference/androidx/security/crypto/package-summary>
+- **合规性**：✅ 已保留许可证声明
+
+#### 18. AndroidX ExifInterface
+
+- **版本**：1.3.7
+- **许可证**：Apache License 2.0
+- **用途**：EXIF 信息处理
+- **使用方式**：图片 EXIF 信息读取和写入
+- **项目地址**：<https://developer.android.com/reference/androidx/exifinterface/media/ExifInterface>
+- **合规性**：✅ 已保留许可证声明
+
 ***
 
 ### 2.4 测试相关（Apache 2.0）
 
-#### 13. JUnit
+#### 19. JUnit
 
 - **版本**：4.13.2
 - **许可证**：Eclipse Public License 1.0
@@ -167,7 +222,7 @@
 - **项目地址**：<https://junit.org/junit4/>
 - **合规性**：✅ 已保留许可证声明
 
-#### 14. AndroidX JUnit
+#### 20. AndroidX JUnit
 
 - **版本**：1.1.5
 - **许可证**：Apache License 2.0
@@ -176,7 +231,7 @@
 - **项目地址**：<https://developer.android.com/jetpack/androidx/releases/test>
 - **合规性**：✅ 已保留许可证声明
 
-#### 15. Espresso Core
+#### 21. Espresso Core
 
 - **版本**：3.5.1
 - **许可证**：Apache License 2.0
@@ -185,7 +240,7 @@
 - **项目地址**：<https://developer.android.com/training/testing/espresso>
 - **合规性**：✅ 已保留许可证声明
 
-#### 16. Compose UI Test JUnit4
+#### 22. Compose UI Test JUnit4
 
 - **版本**：1.5.4（通过 BOM 管理）
 - **许可证**：Apache License 2.0
@@ -198,7 +253,7 @@
 
 ### 2.5 构建工具
 
-#### 17. Android Gradle Plugin
+#### 23. Android Gradle Plugin
 
 - **版本**：8.2.0
 - **许可证**：Apache License 2.0
@@ -207,7 +262,7 @@
 - **项目地址**：<https://developer.android.com/studio/build>
 - **合规性**：✅ 构建工具，无需分发
 
-#### 18. Kotlin Gradle Plugin
+#### 24. Kotlin Gradle Plugin
 
 - **版本**：2.0.21
 - **许可证**：Apache License 2.0
@@ -216,7 +271,7 @@
 - **项目地址**：<https://kotlinlang.org/>
 - **合规性**：✅ 构建工具，无需分发
 
-#### 19. Kotlin Compose Plugin
+#### 25. Kotlin Compose Plugin
 
 - **版本**：2.0.21
 - **许可证**：Apache License 2.0
@@ -233,7 +288,7 @@
 
 #### 1. ML Kit Image Labeling（已集成）
 
-- **版本**：17.0.7
+- **版本**：17.0.9
 - **许可证**：Apache License 2.0
 - **用途**：
   - 场景识别：实时识别拍摄场景（人像、风景、建筑）
@@ -242,16 +297,39 @@
 - **项目地址**：<https://developers.google.com/ml-kit>
 - **合规性**：✅ 许可证兼容
 
-#### 2. MobileNetV2 图像优化模型（自训练）
+#### 2. ML Kit Face Detection（已集成）
 
-- **模型架构**：MobileNetV2
-- **许可证**：自有模型（基于 Apache 2.0 架构修改）
+- **版本**：16.1.7
+- **许可证**：Apache License 2.0
+- **用途**：
+  - 人脸检测：检测人脸位置和关键点
+  - 构图分析：基于人脸位置提供构图建议
+- **集成方式**：通过 Gradle 依赖引入
+- **项目地址**：<https://developers.google.com/ml-kit/vision/face-detection>
+- **合规性**：✅ 许可证兼容
+
+#### 3. ML Kit Object Detection（已集成）
+
+- **版本**：17.0.2
+- **许可证**：Apache License 2.0
+- **用途**：
+  - 对象检测：检测图片中的主体对象
+  - 智能裁剪：基于主体位置提供裁剪建议
+- **集成方式**：通过 Gradle 依赖引入
+- **项目地址**：<https://developers.google.com/ml-kit/vision/object-detection>
+- **合规性**：✅ 许可证兼容
+
+#### 4. ONNX 色彩增强模型（自训练）
+
+- **模型架构**：自定义轻量级 CNN
+- **推理引擎**：ONNX Runtime 1.19.0
+- **许可证**：自有模型
 - **用途**：AI 色彩增强、智能调色
 - **训练数据集**：Unsplash Dataset
   - 数据集许可证：Unsplash License（允许商业使用、修改、分发）
   - 数据集地址：<https://unsplash.com/data>
-- **训练方式**：基于 MobileNetV2 架构进行迁移学习
-- **模型仓库**：<https://github.com/sinc-star/MobileNetV2-Image-Optimization>
+- **训练方式**：迁移学习 + 微调
+- **模型大小**：约 3 MB
 - **合规性**：✅ 自有模型，训练数据合法授权
 
 ***
@@ -614,21 +692,33 @@ implementation("androidx.compose.material3:material3")
 implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
 // CameraX
-implementation("androidx.camera:camera-core:1.1.0-beta01")
-implementation("androidx.camera:camera-camera2:1.1.0-beta01")
-implementation("androidx.camera:camera-lifecycle:1.1.0-beta01")
-implementation("androidx.camera:camera-view:1.1.0-beta01")
-implementation("androidx.camera:camera-extensions:1.1.0-beta01")
+implementation("androidx.camera:camera-core:1.4.1")
+implementation("androidx.camera:camera-camera2:1.4.1")
+implementation("androidx.camera:camera-lifecycle:1.4.1")
+implementation("androidx.camera:camera-view:1.4.1")
+implementation("androidx.camera:camera-extensions:1.4.1")
 
 // Google Accompanist
 implementation("com.google.accompanist:accompanist-permissions:0.32.0")
 implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
 
 // ML Kit
-implementation("com.google.mlkit:image-labeling:17.0.7")
+implementation("com.google.mlkit:image-labeling:17.0.9")
+implementation("com.google.mlkit:face-detection:16.1.7")
+implementation("com.google.mlkit:object-detection:17.0.2")
+
+// ONNX Runtime
+implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.0")
+
+// Coroutines
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
 // Coil 图片加载
 implementation("io.coil-kt:coil-compose:2.4.0")
+
+// Security & Exif
+implementation("androidx.security:security-crypto:1.1.0-alpha06")
+implementation("androidx.exifinterface:exifinterface:1.3.7")
 
 // 测试库
 testImplementation("junit:junit:4.13.2")
@@ -666,14 +756,17 @@ debugImplementation("androidx.compose.ui:ui-test-manifest")
 
 ***
 
-**文档版本**：v1.1\
-**最后更新**：2026-03-22\
+**文档版本**：v1.2\
+**最后更新**：2026-04-05\
 **审核状态**：✅ 已完成审查\
 **主要更新**：
 
-- 添加 ML Kit Image Labeling说明
-- 添加 MobileNetV2 图像优化模型说明
-- 明确训练数据来源
+- 更新 CameraX 版本至 1.4.1
+- 添加 ML Kit Face Detection 和 Object Detection
+- 添加 ONNX Runtime 依赖说明
+- 添加 Kotlinx Coroutines Play Services
+- 添加 AndroidX Security Crypto 和 ExifInterface
+- 更新 AI 模型说明
 
 ***
 

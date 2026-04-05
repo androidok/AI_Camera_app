@@ -272,6 +272,38 @@ private fun computeViewfinderBounds(
     // 预览格宽度固定为手机屏幕宽度
     // 预览格高度根据比例计算，确保不超过屏幕高度
     if (aspectRatioPortrait == 1.0f || aspectRatioPortrait == 0.75f || aspectRatioPortrait == 0.5625f) {
+        // 对于1:1模式，需要基于相机实际输出比例计算预览区域
+        if (aspectRatioPortrait == 1.0f && cameraOutputWidth > 0 && cameraOutputHeight > 0) {
+            // 根据显示旋转调整相机输出尺寸
+            var outputWidth = cameraOutputWidth
+            var outputHeight = cameraOutputHeight
+            if (displayRotation == Surface.ROTATION_0 || displayRotation == Surface.ROTATION_180) {
+                outputWidth = cameraOutputHeight
+                outputHeight = cameraOutputWidth
+            }
+            
+            // 计算相机预览在屏幕上的实际显示区域（FIT_CENTER）
+            val cameraBounds = computeCameraImageBounds(
+                previewViewWidth = screenWidth,
+                previewViewHeight = screenHeight,
+                cameraOutputWidth = outputWidth,
+                cameraOutputHeight = outputHeight,
+                isFullscreen = false
+            )
+            
+            // 在相机预览区域内截取正方形取景框
+            val squareSize = minOf(cameraBounds.width, cameraBounds.height)
+            val squareLeft = cameraBounds.left + (cameraBounds.width - squareSize) / 2f
+            val squareTop = cameraBounds.top + (cameraBounds.height - squareSize) / 2f
+            
+            return ViewfinderBounds(
+                left = squareLeft,
+                top = squareTop + offsetYPx,
+                width = squareSize,
+                height = squareSize
+            )
+        }
+        
         var viewfinderWidth = screenWidth
         var viewfinderHeight = screenWidth / aspectRatioPortrait
         var viewfinderTop = 0f
@@ -511,16 +543,16 @@ private fun CameraScreenContent(
     var isCameraSwitching by remember { mutableStateOf(false) }
 
     // 轮询比例变化，实时更新 viewfinderBounds
+    // 采用PhotonCamera策略：比例切换只调整UI遮罩，不重新绑定相机
     LaunchedEffect(Unit) {
         while (isActive) {
             val newRatio = CameraBackend.ManualSettings.previewAspectRatioPortrait
             if (newRatio != previewAspectRatio) {
+                val startTime = System.currentTimeMillis()
+                Log.d("CameraScreen", "[比例切换] 开始: $previewAspectRatio -> $newRatio (仅UI调整)")
+                
                 previewAspectRatio = newRatio
-                // 若相机输出比例需要变化（4:3 ↔ 16:9），触发相机重新绑定
-                val newCamRatio = toCameraAspectRatio(newRatio)
-                if (newCamRatio != cameraTargetAspectRatio) {
-                    cameraTargetAspectRatio = newCamRatio
-                }
+                
                 // 同步 PreviewView scaleType
                 previewView.scaleType = toPreviewScaleType(newRatio)
                 // 所有模式使用统一偏移逻辑，居中显示
@@ -565,8 +597,11 @@ private fun CameraScreenContent(
                         cameraOutputHeight = cameraOutputHeight
                     ))
                 }
+                
+                val elapsed = System.currentTimeMillis() - startTime
+                Log.d("CameraScreen", "[比例切换] 完成，耗时: ${elapsed}ms")
             }
-            kotlinx.coroutines.delay(100)
+            kotlinx.coroutines.delay(200)
         }
     }
     
@@ -740,30 +775,24 @@ private fun CameraScreenContent(
         }
     }
 
-    // HDR / 翻转摄像头 / 画幅比例变化时重新绑定相机
-    // 使用 remember 跟踪上一次的相机比例
-    var lastCameraRatio by remember { mutableStateOf(cameraTargetAspectRatio) }
+    // HDR / 翻转摄像头时重新绑定相机
+    // 注意：比例切换不再触发相机重绑定，采用PhotonCamera的策略，只调整UI遮罩
+    var lastLensFacing by remember { mutableStateOf(lensFacing) }
+    var lastHdrEnabled by remember { mutableStateOf(hdrEnabled) }
 
-    LaunchedEffect(hdrEnabled, lensFacing, cameraProvider, imageCapture, extensionsManager, cameraTargetAspectRatio) {
+    LaunchedEffect(hdrEnabled, lensFacing, cameraProvider, imageCapture, extensionsManager) {
         val provider = cameraProvider ?: return@LaunchedEffect
         val capture = imageCapture ?: return@LaunchedEffect
 
-        // 如果相机比例实际变化了，显示切换动画
-        if (cameraTargetAspectRatio != lastCameraRatio) {
-            isCameraSwitching = true
-            // 短暂延迟让用户感知切换
-            kotlinx.coroutines.delay(150)
-            lastCameraRatio = cameraTargetAspectRatio
-        }
-
-        // 重建 Preview 以应用新的目标比例，使用高分辨率提升清晰度
-        val preview = Preview.Builder()
-            .setTargetRotation(displayRotation)
-            .setTargetAspectRatio(cameraTargetAspectRatio)
-            // 移除setTargetResolution以避免API冲突，让相机自动选择最佳分辨率
-            .build()
-            .also { it.setSurfaceProvider(previewView.surfaceProvider) }
-        previewUseCase = preview
+        // 只有在摄像头切换或HDR切换时才重新绑定相机
+        val needRebind = lensFacing != lastLensFacing || hdrEnabled != lastHdrEnabled
+        if (!needRebind) return@LaunchedEffect
+        
+        Log.d("CameraScreen", "[相机重绑定] 开始: lensFacing=$lensFacing, hdrEnabled=$hdrEnabled")
+        val rebindStart = System.currentTimeMillis()
+        isCameraSwitching = true
+        lastLensFacing = lensFacing
+        lastHdrEnabled = hdrEnabled
 
         val baseSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
         val selector = if (hdrEnabled) {
@@ -779,14 +808,11 @@ private fun CameraScreenContent(
 
         try {
             provider.unbindAll()
-            camera = provider.bindToLifecycle(lifecycleOwner, selector, preview, capture)
+            camera = provider.bindToLifecycle(lifecycleOwner, selector, previewUseCase!!, capture)
             CameraSession.set(camera, capture)
 
-            // 切换完成后关闭切换动画
-            kotlinx.coroutines.delay(200)
             isCameraSwitching = false
 
-            // 设置0.5倍变焦以获得更广视野（类似系统相机）
             camera?.cameraControl?.setZoomRatio(0.5f)
 
             // 配置相机参数以优化画质和减少频闪
@@ -812,7 +838,11 @@ private fun CameraScreenContent(
             } catch (e: Throwable) {
                 Log.e("CameraScreen", "无法配置相机优化参数", e)
             }
-        } catch (_: Throwable) {
+            
+            val rebindElapsed = System.currentTimeMillis() - rebindStart
+            Log.d("CameraScreen", "[相机重绑定] 完成，耗时: ${rebindElapsed}ms")
+        } catch (e: Throwable) {
+            Log.e("CameraScreen", "[相机重绑定] 失败", e)
         }
     }
 
@@ -1877,7 +1907,7 @@ private fun ArcZoomSlider(
                     var isDragging = false
                     var lastSentZoom = zoomRatio
                     var lastUpdateTime = 0L
-                    val frameTime = 16L // 60fps
+                    val frameTime = 33L // 约30fps，减少相机API调用频率
 
                     detectDragGestures(
                         onDragStart = { offset ->
@@ -1933,7 +1963,7 @@ private fun ArcZoomSlider(
                                 val clampedZoom = newZoom.coerceIn(zoomRatioRange.start, zoomRatioRange.endInclusive)
 
                                 // 只有当变焦值有显著变化时才更新
-                                if (abs(clampedZoom - lastSentZoom) > 0.03f) {
+                                if (abs(clampedZoom - lastSentZoom) > 0.08f) {
                                     onZoomRatioChanged(clampedZoom)
                                     lastSentZoom = clampedZoom
                                     lastUpdateTime = currentTime

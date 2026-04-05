@@ -118,4 +118,74 @@ class NoiseModeler(
     fun getCombinedNoise(): Float {
         return sqrt(getNoiseS() * getNoiseS() + getNoiseO() * getNoiseO())
     }
+
+    /**
+     * 计算ISO自适应降噪强度
+     * 根据ISO值返回合适的降噪内核大小
+     * 原理：
+     * - 正常光线 (ISO < 200): 使用最小降噪，保留细节
+     * - 中等光线 (ISO 200-800): 渐进增加降噪强度
+     * - 暗光 (ISO > 800): 强力降噪
+     *
+     * @return 建议的降噪内核大小 (7-21)
+     */
+    fun getAdaptiveKernelSize(): Int {
+        return when {
+            sensitivityISO < 200 -> 7   // 正常光线：最小降噪
+            sensitivityISO < 400 -> 9   // 轻微噪点
+            sensitivityISO < 800 -> 13  // 中等噪点
+            sensitivityISO < 1600 -> 17 // 较强噪点
+            else -> 21                   // 暗光：最大降噪
+        }
+    }
+
+    /**
+     * 计算ISO自适应降噪强度系数
+     * 用于控制降噪着色器中的强度参数
+     *
+     * @return 降噪强度系数 (0.0 - 1.0)
+     */
+    fun getDenoiseStrength(): Float {
+        val baseNoise = getCombinedNoise()
+        return when {
+            sensitivityISO < 200 -> 0.3f  // 轻降噪
+            sensitivityISO < 400 -> 0.5f
+            sensitivityISO < 800 -> 0.7f
+            sensitivityISO < 1600 -> 0.85f
+            else -> 1.0f                   // 强力降噪
+        } * (1.0f + baseNoise * 10f).coerceAtMost(1.5f)
+    }
+
+    /**
+     * 判断是否需要进行降噪处理
+     * 在正常光线且噪点水平很低时可以跳过降噪以提升性能
+     *
+     * @return true 如果需要进行降噪
+     */
+    fun shouldApplyDenoise(): Boolean {
+        // ISO < 150 且噪声模型值很低时跳过降噪
+        if (sensitivityISO < 150 && getCombinedNoise() < 0.001f) {
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 计算自适应锐化强度
+     * 高ISO时降低锐化以避免噪点放大
+     *
+     * @param baseStrength 基础锐化强度 (0.0 - 1.0)
+     * @return 调整后的锐化强度
+     */
+    fun getAdaptiveSharpenStrength(baseStrength: Float = 0.5f): Float {
+        // 高ISO时降低锐化强度
+        val isoFactor = when {
+            sensitivityISO < 200 -> 1.0f
+            sensitivityISO < 400 -> 0.8f
+            sensitivityISO < 800 -> 0.6f
+            sensitivityISO < 1600 -> 0.4f
+            else -> 0.25f
+        }
+        return baseStrength * isoFactor
+    }
 }
