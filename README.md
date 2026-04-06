@@ -257,6 +257,7 @@ cd AI_Camera_app
 | ---------- | -- | ------ | ------------ |
 | Apache 2.0 | 19 | ✅ 完全兼容 | 允许商业使用、修改和分发 |
 | MIT        | 1  | ✅ 完全兼容 | 最宽松的开源许可证    |
+| GPL-3.0    | 1  | ⚠️ 参考借鉴 | PhotonCamera HDR处理思路参考 |
 | EPL 1.0    | 1  | ✅ 兼容   | 需要公开修改内容     |
 
 详见 [LICENSE](LICENSE) 和 [licenses/](licenses/) 目录。
