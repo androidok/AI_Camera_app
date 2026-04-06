@@ -2,10 +2,10 @@
 
 > **让每一拍都成为佳作**
 
-[!\[License\](https://img.shields.io/badge/License-Apache%202.0-blue.svg null)](LICENSE)
-[!\[Platform\](https://img.shields.io/badge/Platform-Android-green.svg null)](https://developer.android.com/)
-[!\[Language\](https://img.shields.io/badge/Language-Kotlin-blue.svg null)](https://kotlinlang.org/)
-[!\[UI\](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg null)](https://developer.android.com/jetpack/compose)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
+[![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
+[![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg)](https://developer.android.com/jetpack/compose)
 
 大学生计算机设计大赛参赛作品 - 基于 Android 平台的智能摄影辅助应用
 
