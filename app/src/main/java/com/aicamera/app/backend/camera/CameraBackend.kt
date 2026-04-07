@@ -135,15 +135,47 @@ object CameraBackend {
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    Log.d(TAG, "capturePhoto ok: ${photoFile.absolutePath}")
+                    Log.d(TAG, "════════════════════════════════════════════════════════════")
+                    Log.d(TAG, "🖼️ 拍照结果分析")
+                    Log.d(TAG, "════════════════════════════════════════════════════════════")
+                    Log.d(TAG, "保存路径: ${photoFile.absolutePath}")
+                    Log.d(TAG, "文件大小: ${photoFile.length() / 1024}KB")
 
+                    // 分析实际图片分辨率
+                    try {
+                        val options = android.graphics.BitmapFactory.Options().apply {
+                            inJustDecodeBounds = true
+                        }
+                        android.graphics.BitmapFactory.decodeFile(photoFile.absolutePath, options)
+                        val width = options.outWidth
+                        val height = options.outHeight
+                        val mp = width * height / 1000000.0
+                        Log.d(TAG, "实际图片分辨率: ${width}×${height}")
+                        Log.d(TAG, "实际像素数: ${String.format("%.1f", mp)}MP")
+                        Log.d(TAG, "图片格式: ${options.outMimeType}")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "无法读取图片分辨率: ${e.message}")
+                    }
+                    Log.d(TAG, "════════════════════════════════════════════════════════════")
+
+                    // 所见即所得：根据预览框选择的画幅比例裁剪照片
                     val aspectRatio = ManualSettings.previewAspectRatioPortrait
-                    var finalFile = if (aspectRatio > 0f && aspectRatio != 0.75f) {
-                        cropToPreviewAspect(photoFile, aspectRatio)
-                    } else if (aspectRatio < 0f) {
-                        cropToPreviewAspect(photoFile, aspectRatio)
+                    val targetRatio = when {
+                        aspectRatio == 1.0f -> 1.0f  // 1:1 正方形
+                        aspectRatio == 0.75f -> 0.75f  // 4:3
+                        aspectRatio == 0.5625f -> 0.5625f  // 16:9
+                        aspectRatio < 0f -> -1f  // 全屏模式，使用屏幕比例
+                        else -> aspectRatio
+                    }
+
+                    var finalFile = if (targetRatio > 0f) {
+                        // 标准比例：裁剪到目标比例
+                        cropImageToAspectRatio(photoFile, targetRatio)
                     } else {
-                        photoFile
+                        // 全屏模式：使用屏幕比例裁剪
+                        val displayMetrics = context.resources.displayMetrics
+                        val screenRatio = displayMetrics.widthPixels.toFloat() / displayMetrics.heightPixels
+                        cropImageToAspectRatio(photoFile, screenRatio)
                     }
 
                     if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
@@ -182,16 +214,29 @@ object CameraBackend {
                 val cameraId = if (lensFacing == CameraSelector.LENS_FACING_BACK) "0" else "1"
                 
                 val result = service.captureHdr(cameraId)
-                
+
                 Log.d(TAG, "HDR capture completed: ${result.filePath}, ${result.processingTimeMs}ms, ${result.frameCount} frames")
-                
+
+                // 所见即所得：根据预览框选择的画幅比例裁剪照片
                 val aspectRatio = ManualSettings.previewAspectRatioPortrait
-                var finalFile = File(result.filePath)
-                
-                if (aspectRatio > 0f) {
-                    finalFile = cropImageToAspectRatio(finalFile, aspectRatio)
+                val targetRatio = when {
+                    aspectRatio == 1.0f -> 1.0f  // 1:1 正方形
+                    aspectRatio == 0.75f -> 0.75f  // 4:3
+                    aspectRatio == 0.5625f -> 0.5625f  // 16:9
+                    aspectRatio < 0f -> -1f  // 全屏模式，使用屏幕比例
+                    else -> aspectRatio
                 }
-                
+
+                var finalFile = if (targetRatio > 0f) {
+                    // 标准比例：裁剪到目标比例
+                    cropImageToAspectRatio(File(result.filePath), targetRatio)
+                } else {
+                    // 全屏模式：使用屏幕比例裁剪
+                    val displayMetrics = context.resources.displayMetrics
+                    val screenRatio = displayMetrics.widthPixels.toFloat() / displayMetrics.heightPixels
+                    cropImageToAspectRatio(File(result.filePath), screenRatio)
+                }
+
                 if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
                     finalFile = mirrorImageHorizontally(finalFile)
                 }
@@ -226,59 +271,6 @@ object CameraBackend {
     fun releaseHdrService() {
         hdrService?.release()
         hdrService = null
-    }
-
-    private fun cropToPreviewAspect(photoFile: File, aspectRatio: Float): File {
-        try {
-            val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath) ?: return photoFile
-            val width = bitmap.width
-            val height = bitmap.height
-
-            val cameraRatio = 0.75f
-
-            val targetRatio = if (aspectRatio < 0f) {
-                9f / 19.5f
-            } else {
-                aspectRatio
-            }
-
-            val targetWidth: Int
-            var targetHeight = height
-
-            if (kotlin.math.abs(targetRatio - cameraRatio) < 0.001f) {
-                targetWidth = width
-                targetHeight = height
-            } else if (targetRatio > cameraRatio) {
-                val squareSize = minOf(width, height)
-                targetWidth = squareSize
-                targetHeight = squareSize
-            } else {
-                val cropRatio = targetRatio / cameraRatio
-                targetWidth = (width * cropRatio).toInt()
-                targetHeight = height
-            }
-
-            val x = (width - targetWidth) / 2
-            val y = (height - targetHeight) / 2
-
-            val croppedBitmap = Bitmap.createBitmap(bitmap, x, y, targetWidth, targetHeight)
-
-            FileOutputStream(photoFile).use { out ->
-                croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-            }
-
-            if (croppedBitmap != bitmap) {
-                bitmap.recycle()
-                croppedBitmap.recycle()
-            }
-
-            Log.d(TAG, "Image cropped to ${targetWidth}x${targetHeight}, originalRatio=$aspectRatio, targetRatio=$targetRatio")
-            return photoFile
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to crop image to preview aspect", e)
-            return photoFile
-        }
     }
 
     private fun mirrorImageHorizontally(photoFile: File): File {

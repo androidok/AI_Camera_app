@@ -349,8 +349,8 @@ class PostPipeline(private val context: Context) {
         val noiseModeler = params.noiseModeler
 
         // 计算自适应锐化强度
-        // 基础强度 0.5，根据ISO自动调整
-        val baseStrength = 0.5f
+        // 基础强度 1.0，确保画面清晰锐利
+        val baseStrength = 1.0f
         val adaptiveStrength = noiseModeler?.getAdaptiveSharpenStrength(baseStrength) ?: baseStrength
 
         // 估计噪声水平用于着色器内的局部调整

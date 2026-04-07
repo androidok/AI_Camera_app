@@ -1,7 +1,5 @@
 # CameraX-AI 智能摄影助手 - 设计思路
 
-## 大学生软件创新赛事参赛作品
-
 ---
 
 ## 一、项目概述
@@ -30,7 +28,6 @@
 | 摄影初学者 | 学习构图法则 | 缺乏专业知识，不知道什么是好构图 |
 | 社交媒体用户 | 快速产出高质量照片 | 缺乏时间和技巧进行后期处理 |
 | 旅行爱好者 | 记录美好瞬间 | 光线、场景变化快，来不及调整参数 |
-| 美食博主 | 快速拍摄并美化 | 需要快速产出吸引人的照片 |
 
 ---
 
@@ -700,15 +697,6 @@ fun AISmartCameraTheme(
 }
 ```
 
-### 9.3 多语言支持
-
-```xml
-<!-- res/values/strings.xml -->
-<string name="scene_portrait">人像拍摄</string>
-<string name="scene_landscape">风景拍摄</string>
-<string name="scene_food">美食拍摄</string>
-```
-
 ---
 
 ## 十、总结
@@ -737,8 +725,7 @@ fun AISmartCameraTheme(
 
 **文档版本**：v1.1
 **最后更新**：2026-04-05
-**状态**：已更新，反映项目实际实现
 
 ---
 
-*CameraX-AI 驱动的智能摄影助手 - 大学生软件创新赛事参赛作品*
+*CameraX-AI 驱动的智能摄影助手 

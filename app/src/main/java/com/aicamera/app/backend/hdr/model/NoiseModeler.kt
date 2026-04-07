@@ -142,18 +142,19 @@ class NoiseModeler(
     /**
      * 计算ISO自适应降噪强度系数
      * 用于控制降噪着色器中的强度参数
+     * 优化：降低降噪强度以保护细节清晰度
      *
      * @return 降噪强度系数 (0.0 - 1.0)
      */
     fun getDenoiseStrength(): Float {
         val baseNoise = getCombinedNoise()
         return when {
-            sensitivityISO < 200 -> 0.3f  // 轻降噪
-            sensitivityISO < 400 -> 0.5f
-            sensitivityISO < 800 -> 0.7f
-            sensitivityISO < 1600 -> 0.85f
-            else -> 1.0f                   // 强力降噪
-        } * (1.0f + baseNoise * 10f).coerceAtMost(1.5f)
+            sensitivityISO < 200 -> 0.15f  // 极低降噪，保护细节
+            sensitivityISO < 400 -> 0.25f  // 轻度降噪
+            sensitivityISO < 800 -> 0.45f  // 中度降噪
+            sensitivityISO < 1600 -> 0.65f // 较强降噪
+            else -> 0.85f                  // 强力降噪但不过度
+        } * (1.0f + baseNoise * 5f).coerceAtMost(1.2f)
     }
 
     /**

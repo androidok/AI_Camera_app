@@ -87,6 +87,7 @@ import com.aicamera.app.backend.ai.CameraSettingsInfo
 import com.aicamera.app.backend.camera.CameraBackend
 import com.aicamera.app.backend.camera.CameraSession
 import com.aicamera.app.backend.camera.CameraAdvancedControls
+import com.aicamera.app.backend.camera.QualityConfig
 import androidx.camera.camera2.interop.Camera2Interop
 import com.aicamera.app.backend.gallery.GalleryBackend
 import com.aicamera.app.backend.gallery.rememberLastPhotoUri
@@ -729,12 +730,12 @@ private fun CameraScreenContent(
                 }
             previewUseCase = preview
 
-        // 拍照使用默认配置
-        val capture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .setJpegQuality(100)
-            .setTargetRotation(displayRotation)
-            .build()
+        // 拍照使用最高画质配置
+        val capture = QualityConfig.createImageCaptureBuilder(
+            context = context,
+            lensFacing = lensFacing,
+            displayRotation = displayRotation
+        ).build()
         imageCapture = capture
 
         val selector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
@@ -746,6 +747,18 @@ private fun CameraScreenContent(
 
             // 设置0.5倍变焦以获得更广视野（类似系统相机）
             camera?.cameraControl?.setZoomRatio(0.5f)
+
+            // 诊断日志：输出预览实际分辨率
+            preview.resolutionInfo?.let { resInfo ->
+                val res = resInfo.resolution
+                Log.d("CameraScreen", "════════════════════════════════════════════════════════════")
+                Log.d("CameraScreen", "🎥 预览分辨率分析")
+                Log.d("CameraScreen", "════════════════════════════════════════════════════════════")
+                Log.d("CameraScreen", "预览实际分辨率: ${res.width}×${res.height}")
+                Log.d("CameraScreen", "预览像素数: ${(res.width * res.height / 1000000.0)}MP")
+                Log.d("CameraScreen", "目标比例: ${if (cameraTargetAspectRatio == androidx.camera.core.AspectRatio.RATIO_4_3) "4:3" else "16:9"}")
+                Log.d("CameraScreen", "════════════════════════════════════════════════════════════")
+            }
 
             // 配置相机参数以优化画质和减少频闪
             try {

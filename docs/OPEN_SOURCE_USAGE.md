@@ -645,7 +645,7 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 
 ***
 
-## 十、联系方式与致谢
+## 十、致谢
 
 ### 10.1 开源项目致谢
 
